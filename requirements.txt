@@ -1,0 +1,4 @@
+discord.py # main discord library
+PyNaCl      # used for voice
+yt-dlp      # used to download audio
+python-ffmpeg # ffmpeg library

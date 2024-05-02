@@ -1,0 +1,16 @@
+{    
+    "API_KEYS": {
+        "DISCORD": "TOKEN"
+    },
+    
+    "FFMPEG_PATH": "/usr/bin/ffmpeg",
+
+    "SHARDS": 1,
+    "OWNER_IDS": [725539745572323409],
+    "HOST_OWNERS": [725539745572323409, 616228691155877898, 769632057575342081],
+    "PREFIXES": ["pikmin", "p"],
+    
+    "SYNC_TREE": true,
+    "DEVELOPMENT_GUILD": 1016777760305320036,
+    "DEVELOPMENT": false
+}

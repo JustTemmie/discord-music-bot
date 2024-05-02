@@ -1,0 +1,9 @@
+config.json
+
+venv/
+logs/
+temp/
+assets/
+
+*.pyc
+*.env
