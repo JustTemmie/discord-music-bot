@@ -74,7 +74,7 @@ if __name__ == "__main__":
     bot = Bot()
 
     @bot.tree.command(
-        name="test command",
+        name="testcommand",
         description="My first application Command",
         guild=discord.Object(id=bot.config["DEVELOPMENT_GUILD"])
     )

@@ -94,17 +94,20 @@ class MusicCommands(commands.Cog):
 
     @commands.command(name="queue", aliases=["q"])
     async def queue_command(self, ctx, page = 1):
+        if type(page) != int:
+            return await ctx.send(f"{page} is not a valid page number")
+        
         guild_id = ctx.guild.id
         if not guild_id in self.player.data:
-            await ctx.send("sorry, i'm currently not playing any songs within this server")
-            return
+            return await ctx.send("sorry, i'm currently not playing any songs within this server")
+            
         
         queue = self.player.data[guild_id]["queue"]
         raw_queue_data = []
                 
         for song in queue:
             if song["data"] not in [None, "pending"]:
-                song_data = music_handler.get_meta_data(song["data"], False)
+                song_data = await music_handler.get_meta_data(song["data"], False)
                 raw_queue_data.append(song_data)
             else:
                 raw_queue_data.append({
@@ -112,25 +115,36 @@ class MusicCommands(commands.Cog):
                     "readable_duration": "N/A"
                 })
         
-        total_pages = math.ceil(len(raw_queue_data)) / 10
+        total_pages = math.ceil(len(raw_queue_data) / 10)
         if page > total_pages:
             page = total_pages
         
         embed = helpers.create_embed(ctx)
         embed.title = "Queue"
-        embed.footer.text = f"page {page}/{total_pages}"
-        if self.player.data["meta_data"]["thumbnail"] != None:
-            embed.set_thumbnail(self.player.data["meta_data"]["thumbnail"])
+        embed.set_footer(text=f"page {page}/{total_pages}", icon_url=ctx.author.display_avatar.url)
+        thumbnail_url = self.player.data[guild_id]["meta_data"]["thumbnail"]
+        if "https://" in thumbnail_url:
+            embed.set_thumbnail(url=thumbnail_url)
         
-        for i in range((page - 1) * 10, page * 10):
-            if i > len(raw_queue_data):
-                break
-            
-            song_data = raw_queue_data[i]
+        if len(raw_queue_data) > 0:
+            field_start = round((page - 1) * 10)
+            field_end = round(min(len(raw_queue_data), page * 10))
+            for i in range(field_start, field_end):
+                song_data = raw_queue_data[i]
+                embed.add_field(
+                    name=song_data["title"],
+                    value=song_data["readable_duration"],
+                    inline=False
+                )
+        
+        else:
             embed.add_field(
-                name=song_data["title"],
-                description=song_data["readable_duration"]
+                name="None",
+                value=f"The queue is currently empty, go ahead and add some songs with `{ctx.prefix}play`",
+                inline=False
             )
+        
+        await ctx.send(embed=embed)
         
 
 
