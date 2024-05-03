@@ -3,6 +3,9 @@ import aiohttp
 import libraries.helpers as helpers
 
 async def get_like_dislike_ratio(video_id):
+    if video_id == "unknown":
+        return {}
+    
     async with aiohttp.ClientSession() as session:
         async with session.get(f"https://returnyoutubedislikeapi.com/votes?videoId={video_id}") as r:
             if r.status == 200:
@@ -52,10 +55,10 @@ async def add_embed_fields(embed, meta_data):
                 value = "Livestream")
         
         # DURATION
-        if type(meta_data["duration"]) in [float, int]:
+        if meta_data["readable_duration"] != "unknown":
             embed.add_field(
                 name = "Duration",
-                value = helpers.format_time(meta_data["duration"]))
+                value = meta_data["readable_duration"])
         
         # UPLOADER
         if meta_data["uploader"] != "unknown":
@@ -98,11 +101,13 @@ async def send_queue_finished_embed(ctx):
     embed.title = "Queue Finished"
     await ctx.send(embed = embed)
 
-async def get_meta_data(data):
+async def get_meta_data(data, fetch_like_dislike_ratio = True):
     video_id = data["id"]
     if video_id == None: video_id = "unknown"
-    meta_data = await get_like_dislike_ratio(video_id)
-    
+    if fetch_like_dislike_ratio:
+        meta_data = await get_like_dislike_ratio(video_id)
+    else:
+        meta_data = {}
     
     data_points = ["title", "duration", "live_status", "upload_date", "uploader", "uploader_url", "thumbnail"]
 
@@ -111,5 +116,10 @@ async def get_meta_data(data):
             meta_data[entry] = data[entry]
         else:
             meta_data[entry] = "unknown"
+    
+    if "duration" in data:
+        meta_data["readable_duration"] = helpers.format_time(data["duration"])
+    else:
+        meta_data["readable_duration"] = "unknown"
     
     return meta_data

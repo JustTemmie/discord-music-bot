@@ -36,6 +36,7 @@ class TrackedFFmpegPCMAudio(discord.FFmpegPCMAudio):
         self.player = player
         self.guild_id = guild_id
 
+    # read is called every 20 miliseconds, overwrite the read function to increase a counter by 20
     def read(self, *args, **kwargs):
         ret = super().read()
         if ret:
@@ -58,6 +59,9 @@ class YtDlpSource(discord.PCMVolumeTransformer):
         
         if song["data"] == None:
             data = await player.download_song(song["url"])
+        # elif song["data"] == "pending":
+        #     await song["data"] != "pending":
+        #         data = song["data"]
         else:
             data = song["data"]
         

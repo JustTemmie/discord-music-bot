@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 
 import asyncio
+import math
 
 import libraries.helpers as helpers
 import libraries.music_handler as music_handler
@@ -91,6 +92,48 @@ class MusicCommands(commands.Cog):
         
         await ctx.send(embed = embed)
 
+    @commands.command(name="queue", aliases=["q"])
+    async def queue_command(self, ctx, page = 1):
+        guild_id = ctx.guild.id
+        if not guild_id in self.player.data:
+            await ctx.send("sorry, i'm currently not playing any songs within this server")
+            return
+        
+        queue = self.player.data[guild_id]["queue"]
+        raw_queue_data = []
+                
+        for song in queue:
+            if song["data"] not in [None, "pending"]:
+                song_data = music_handler.get_meta_data(song["data"], False)
+                raw_queue_data.append(song_data)
+            else:
+                raw_queue_data.append({
+                    "title": "Fetching...",
+                    "readable_duration": "N/A"
+                })
+        
+        total_pages = math.ceil(len(raw_queue_data)) / 10
+        if page > total_pages:
+            page = total_pages
+        
+        embed = helpers.create_embed(ctx)
+        embed.title = "Queue"
+        embed.footer.text = f"page {page}/{total_pages}"
+        if self.player.data["meta_data"]["thumbnail"] != None:
+            embed.set_thumbnail(self.player.data["meta_data"]["thumbnail"])
+        
+        for i in range((page - 1) * 10, page * 10):
+            if i > len(raw_queue_data):
+                break
+            
+            song_data = raw_queue_data[i]
+            embed.add_field(
+                name=song_data["title"],
+                description=song_data["readable_duration"]
+            )
+        
+
+
     @commands.command(name="move", aliases=["psps"])
     async def move_command(self, ctx):
         voice_channel = ctx.author.voice.channel
@@ -117,6 +160,10 @@ class MusicCommands(commands.Cog):
         description="Pikmin :(")
     async def stop_command(self, ctx):
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+        
+        if ctx.guild.id in self.player.data:
+            self.player.data[ctx.guild.id]["queue"] = []
+            
         if voice:
             await voice.disconnect()
             await ctx.send("okay, i'll stop")
