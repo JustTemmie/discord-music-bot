@@ -20,10 +20,10 @@ def create_embed(ctx, user = None):
 
 def format_time(seconds):
     time_table = {
-        "year": seconds // 31557600 % 31557600,
-        "day": seconds // 86400 % 86400,
-        "hour": seconds // 3600 % 3600,
-        "minute": seconds // 60 % 60,
+        "year": (seconds // 31557600),
+        "day": (seconds // 86400) % 365.25,
+        "hour": (seconds // 3600) % 24,
+        "minute": (seconds // 60) % 60,
         "second": seconds % 60,
     }
     

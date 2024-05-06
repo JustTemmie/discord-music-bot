@@ -6,7 +6,7 @@ import aiohttp
 import math
 import yt_dlp
 
-import libraries.helpers as helpers
+import hatsune_miku.helpers as helpers
 
 ytdlp_format_options = {
     'format': 'bestaudio/best',
@@ -421,6 +421,18 @@ class MusicPlayer(commands.Cog):
         else:
             await ctx.send("sorry, i don't seem to be in any voice channels at the moment")
         del self.data[ctx.guild.id]
+    
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member, before, after):
+        if before.channel is not None:
+            channel = before.channel
+            if len(channel.members) == 1:
+                if channel.guild.id in self.data:
+                    voice = discord.utils.get(self.bot.voice_clients, guild=channel.guild)
+        
+                    self.data[channel.guild.id]["queue"] = []
+                    
+                    await voice.disconnect()
 
 async def setup(bot):
     await bot.add_cog(MusicPlayer(bot))
