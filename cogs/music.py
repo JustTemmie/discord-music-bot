@@ -274,8 +274,6 @@ class MusicPlayer(commands.Cog):
 
         await ctx.message.add_reaction("✅")
         
-        print(self.data[guild_id])
-        
         if voice_client == None:
             await voice_channel.connect(self_deaf=True)
             await self.play_song(ctx)

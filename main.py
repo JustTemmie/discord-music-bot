@@ -16,9 +16,11 @@ bot = None
 if __name__ == "__main__":
     config = configLib.getConfig()
     
-    if config["DEVELOPMENT"]:
-        directories = ["temp", "logs"]
-        for dir in directories:
+    directories = ["temp", "logs"]
+    for dir in directories:
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+        if config["DEVELOPMENT"]:
             for file in os.listdir(dir):
                 os.remove(f"{dir}/{file}")
     
@@ -36,7 +38,7 @@ if __name__ == "__main__":
 
     class Bot(commands.AutoShardedBot):
         def __init__(self, *args, **kwargs):
-            self.config = configLib.getConfig()
+            self.config = config
             
             super().__init__(
                 shards=self.config["SHARDS"],
