@@ -68,6 +68,7 @@ class YtDlpSource(discord.PCMVolumeTransformer):
         filename = data['url']
         
         player.data[guild_id]["meta_data"] = await player.get_meta_data(data)
+        player.data[guild_id]["meta_data"]["ctx"] = song["ctx"]
         player.data[guild_id]["progress"] = 0        
         
         return cls(TrackedFFmpegPCMAudio(player, guild_id, filename, **ffmpeg_options), data=data)
@@ -100,8 +101,8 @@ class MusicPlayer(commands.Cog):
     async def play_song(self, ctx):
         try:
             if len(self.data[ctx.guild.id]["queue"]) == 0:
-                self.data["playing"] = False 
                 await self.send_queue_finished_embed(ctx)
+                self.data[ctx.guild.id]["playing"] = False
                 return
             
             self.data[ctx.guild.id]["playing"] = True
@@ -116,7 +117,7 @@ class MusicPlayer(commands.Cog):
                 )
             )
             
-            await self.send_now_playing_embed(self, ctx)
+            await self.send_now_playing_embed(ctx)
         
         except Exception as err:
             error = f"whoopsie, it looks like i encountered an error whilst trying to play your song\n{type(err)}:\n```{err}```"
@@ -156,10 +157,10 @@ class MusicPlayer(commands.Cog):
             player.data[guild_id]["queue"] = []
             player.data[guild_id]["progress"] = 0
 
-    async def send_now_playing_embed(self, player, ctx):
-        meta_data = player.data[ctx.guild.id]["meta_data"]
+    async def send_now_playing_embed(self, ctx):
+        meta_data = self.data[ctx.guild.id]["meta_data"]
         
-        embed = helpers.create_embed(ctx)
+        embed = helpers.create_embed(meta_data["ctx"])
         embed.title = meta_data["title"]
         embed.description = "Now Playing"
 
@@ -220,6 +221,7 @@ class MusicPlayer(commands.Cog):
 
     async def send_queue_finished_embed(self, ctx):
         embed = helpers.create_embed(ctx)
+        
         embed.title = "Queue Finished"
         await ctx.send(embed = embed)
 
@@ -267,10 +269,12 @@ class MusicPlayer(commands.Cog):
         
         await self.ensure_valid_data(self, guild_id)
         self.data[guild_id]["queue"].append(
-            {"url": song, "data": None}
+            {"url": song, "data": None, "ctx": ctx}
         )
 
         await ctx.message.add_reaction("✅")
+        
+        print(self.data[guild_id])
         
         if voice_client == None:
             await voice_channel.connect(self_deaf=True)
@@ -284,7 +288,7 @@ class MusicPlayer(commands.Cog):
             queue = self.data[guild_id]["queue"]
             index = len(queue) - 1
             
-            if not self.data[guild_id]["playing"]:
+            if self.data[guild_id]["playing"] == False:
                 await self.play_song(ctx)
             else:
                 await self.cache_song(guild_id, index)
@@ -306,6 +310,9 @@ class MusicPlayer(commands.Cog):
         guild_id = ctx.guild.id
         if not guild_id in self.data or self.data[guild_id]["playing"] == False:
             await ctx.send("sorry, i'm currently not playing any songs within this server")
+            return
+        
+        if "meta_data" not in self.data[guild_id]:
             return
         
         meta_data = self.data[guild_id]["meta_data"]
@@ -332,9 +339,9 @@ class MusicPlayer(commands.Cog):
             return await ctx.send(f"{page} is not a valid page number")
         
         guild_id = ctx.guild.id
-        if not guild_id in self.data:
+        if not guild_id in self.data or self.data[guild_id]["playing"] == False:
             return await ctx.send("sorry, i'm currently not playing any songs within this server")
-            
+        
         
         queue = self.data[guild_id]["queue"]
         raw_queue_data = []
